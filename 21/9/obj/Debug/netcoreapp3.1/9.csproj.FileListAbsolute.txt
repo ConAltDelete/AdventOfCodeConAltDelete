@@ -1,0 +1,4 @@
+D:\kode_prosjekter\advent_21\9\obj\Debug\netcoreapp3.1\9.csprojAssemblyReference.cache
+D:\kode_prosjekter\advent_21\9\obj\Debug\netcoreapp3.1\9.AssemblyInfoInputs.cache
+D:\kode_prosjekter\advent_21\9\obj\Debug\netcoreapp3.1\9.AssemblyInfo.cs
+D:\kode_prosjekter\advent_21\9\obj\Debug\netcoreapp3.1\9.csproj.CoreCompileInputs.cache

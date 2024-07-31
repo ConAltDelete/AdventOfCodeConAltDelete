@@ -1,0 +1,14 @@
+def coord{}
+
+num -> (coord, coord)
+sym -> [coord] + S(num)
+
+leaf <- []nums
+collection <- []sym
+
+for each line:
+	parse lines
+
+for each symbol:
+	look in moore-neigboorhood of self in leaf. -> 8 coords
+	
