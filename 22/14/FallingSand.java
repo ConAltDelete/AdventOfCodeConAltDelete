@@ -28,20 +28,28 @@ public class FallingSand {
 			this.Fin = Fin;
 		}
 
-		public ArrayList<Integer[]> Get_points() throws Exception {
+		/*
+		 * 	Takes the start-end pair of coordianes and generates the points inbetween in a Taxicab-grid (Minkowski p=1).
+		 *  If the coordinates are different in both axis, it will form two lines and follow Taxicab geometri with the fewes segments (2 lines).
+		 * 
+		*/
+		public Vector<ArrayList<Integer>> Get_points() throws Exception {
 			if(this.Start == null && this.Fin == null){ // Values not set
 				throw new Exception("Start and end values are not set.");
 			}
 			
-			// Check if one component is static, then iterate the other.
+			// Check if one component is static, then automatic iterate the other.
 
-			ArrayList<Integer[]> ret = new ArrayList<>(Arrays.asList(new Integer[][]{this.Start,this.Fin}));
+			Vector<ArrayList<Integer>> ret = new Vector<>();
 
+			ArrayList<Integer> intermediate_coord;
 			for (int X_start = this.Start[0]+1; X_start < this.Fin[0]; X_start++){ // if different then itr runs, otherwise it does not. Same for the other loop.
-				ret.add(new Integer[]{X_start,this.Fin[1]});
+				intermediate_coord = new ArrayList<>( Arrays.asList( new Integer[]{X_start,this.Fin[1]} ) );
+				ret.add(intermediate_coord);
 			}
 			for (int Y_start = this.Start[1]+1; Y_start < this.Fin[1]; Y_start++){
-				ret.add(new Integer[]{this.Fin[0],Y_start});
+				intermediate_coord = new ArrayList<>( Arrays.asList( new Integer[]{this.Fin[0],Y_start} ) );
+				ret.add(intermediate_coord);
 			}
 			//System.out.println(ret.size());
 			return ret;
@@ -59,9 +67,12 @@ public class FallingSand {
 
 		Integer x; // X-coordinate
 		Integer y; // Y-coordinate
+		Integer[] Start;
 		public Sand(int X, int Y) {
 			this.x = X;
 			this.y = Y;
+			this.Start = new Integer[]{X,Y};
+			path_stack.add(new ArrayList<>(Arrays.asList(new Integer[]{X,Y})));
 		}
 
 		/*
@@ -74,7 +85,7 @@ public class FallingSand {
 			for(int i = 0; i < offset.length; i++){
 				System.out.print(i);
 				new_coord = new ArrayList<>(Arrays.asList(new Integer[]{this.x + offset[i][0], this.y + offset[i][1]}));
-				wall_collition = wall_set.contains(new_coord); //! Something wrong with the comperation
+				wall_collition = wall_set.contains(new_coord); //! Something wrong with the comperation. MIght be fixed after type correction.
 				if(!wall_collition){
 					this.x = new_coord.get(0);
 					this.y = new_coord.get(1);
@@ -99,6 +110,9 @@ public class FallingSand {
 			System.out.println(Integer.toString(this.x) + "," + Integer.toString(this.y));
 			while(this.y < 200 & runtime_k < 10000){ // runtime_k to prevent an infinit loop. 
 				if(!this.Fall()){
+					if(path_stack.isEmpty()){
+						path_stack.add(new ArrayList<>(Arrays.asList(this.Start)));
+					}
 					last_path = path_stack.pop();
 					this.x = last_path.get(0); // jumps back to last known working path since all sand has to take the same path.
 					this.y = last_path.get(1);
@@ -139,15 +153,15 @@ public class FallingSand {
 	 *	@param filename name of the file to be read. Must be a text file.
 	 *	@return null
 	 * */
-	public static void read_file(String filename) {
+	public static void read_file(String filename) { //! Need to correct insertion of new wall points.
 		// read file
 		//
 
-		Vector<ArrayList<Integer>> collection_walls = new ArrayList<>();
+		Vector<ArrayList<Integer>> collection_walls = new Vector<ArrayList<Integer>>();
 		try (BufferedReader input_file = new BufferedReader(new FileReader(filename))){
 			String line;
 			ArrayList<Wall> walls;
-			ArrayList<Integer[]> inbetween_points;
+			Vector<ArrayList<Integer>> inbetween_points;
 			while ((line = input_file.readLine()) != null){ // iterating over file to convert to maze
 				walls = parse(line);
 				for(Wall obj: walls){
@@ -173,17 +187,17 @@ public class FallingSand {
 	 * */
 	private static ArrayList<Wall> parse(String line) {
 		String[] coords_array = line.trim().split(" -> ");
-		int[] pre_coord;
+		Integer[] pre_coord;
 		String[] coord_str = coords_array[0].trim().split(",");
-		pre_coord = new int[]{Integer.parseInt(coord_str[0]),Integer.parseInt(coord_str[1])};
+		pre_coord = new Integer[]{Integer.parseInt(coord_str[0]),Integer.parseInt(coord_str[1])};
 		
-		int[] coord;
+		Integer[] coord;
 		FallingSand fallingSandInstance = new FallingSand();
 		Wall temp_wall;
 		ArrayList<Wall> collect_wall = new ArrayList<>();
 		for(int i = 1; i < coords_array.length; i++){
 			String[] coord1 = coords_array[i].trim().split(",");
-			coord  = new int[]{Integer.parseInt(coord1[0]),Integer.parseInt(coord1[1])};
+			coord  = new Integer[]{Integer.parseInt(coord1[0]),Integer.parseInt(coord1[1])};
 			temp_wall = fallingSandInstance.new Wall(pre_coord,coord);
 			collect_wall.add(temp_wall);
 			pre_coord = coord;
