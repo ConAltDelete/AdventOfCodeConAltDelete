@@ -40,18 +40,40 @@ public class FallingSand {
 			
 			// Check if one component is static, then automatic iterate the other.
 
+			// System.out.println("Coords in -> Start: " + Arrays.toString(this.Start) + " End: " + Arrays.toString(this.Fin));
+
 			Vector<ArrayList<Integer>> ret = new Vector<>();
 
 			ArrayList<Integer> intermediate_coord;
-			for (int X_start = this.Start[0]+1; X_start < this.Fin[0]; X_start++){ // if different then itr runs, otherwise it does not. Same for the other loop.
-				intermediate_coord = new ArrayList<>( Arrays.asList( new Integer[]{X_start,this.Fin[1]} ) );
+			Integer minimum_X;
+			Integer minimum_Y;
+			Integer maximum_X;
+			Integer maximum_Y;
+
+			if (this.Start[0] < this.Fin[0]){
+				minimum_X = this.Start[0];
+				maximum_X = this.Fin[0];
+			} else {
+				minimum_X = this.Fin[0];
+				maximum_X = this.Start[0];
+			}
+			if (this.Start[1] < this.Fin[1]){
+				minimum_Y = this.Start[1];
+				maximum_Y = this.Fin[1];
+			} else {
+				minimum_Y = this.Fin[1];
+				maximum_Y = this.Start[1];
+			}
+
+			for (int X_start = minimum_X; X_start <= maximum_X; X_start++){
+				intermediate_coord = new ArrayList<>( Arrays.asList( new Integer[]{X_start,maximum_Y} ) );
 				ret.add(intermediate_coord);
 			}
-			for (int Y_start = this.Start[1]+1; Y_start < this.Fin[1]; Y_start++){
-				intermediate_coord = new ArrayList<>( Arrays.asList( new Integer[]{this.Fin[0],Y_start} ) );
+			for (int Y_start = minimum_Y; Y_start <= maximum_Y; Y_start++){
+				intermediate_coord = new ArrayList<>( Arrays.asList( new Integer[]{maximum_X,Y_start} ) );
 				ret.add(intermediate_coord);
 			}
-			//System.out.println(ret.size());
+			// System.out.println(ret.toString());
 			return ret;
 		}
 
@@ -72,12 +94,14 @@ public class FallingSand {
 			this.x = X;
 			this.y = Y;
 			this.Start = new Integer[]{X,Y};
-			path_stack.add(new ArrayList<>(Arrays.asList(new Integer[]{X,Y})));
+			//path_stack.add(new ArrayList<>(Arrays.asList(new Integer[]{X,Y})));
 		}
 
-		/*
+		/**
 		 *	Changes the coordinates until particle falls to rest. If it falls to rest it becomes a wall.
-		 * */
+		 * 
+		 * @return
+		 */
 		public boolean Fall() {
 			int[][] offset = {{0,1},{-1,1},{1,1}};
 			ArrayList<Integer> new_coord;
@@ -85,41 +109,66 @@ public class FallingSand {
 			for(int i = 0; i < offset.length; i++){
 				System.out.print(i);
 				new_coord = new ArrayList<>(Arrays.asList(new Integer[]{this.x + offset[i][0], this.y + offset[i][1]}));
-				wall_collition = wall_set.contains(new_coord); //! Something wrong with the comperation. MIght be fixed after type correction.
+				wall_collition = wall_set.contains(new_coord);
+				if(!sand_set.isEmpty()){
+					wall_collition = wall_collition | sand_set.contains(new_coord);
+				}
 				if(!wall_collition){
+					if(i > 0){
+						path_stack.push(new ArrayList<>(Arrays.asList(new Integer[]{this.x,this.y})));
+					}
 					this.x = new_coord.get(0);
 					this.y = new_coord.get(1);
-					if(i > 0){
-						path_stack.add(new_coord);
-					}
 					return true;					
 				}
 			}
-			ArrayList<Integer> new_wall = new ArrayList<>(Arrays.asList(new Integer[]{this.x,this.y}));
-			wall_set.add(new_wall);
+			ArrayList<Integer> new_sandwall = new ArrayList<>(Arrays.asList(new Integer[]{this.x,this.y}));
+			sand_set.add(new_sandwall);
+			if(new_sandwall.get(0) > max_X){
+				max_X = new_sandwall.get(0);
+			}
+			if(new_sandwall.get(0) < min_X){
+				min_X = new_sandwall.get(0);
+			}
+			if(new_sandwall.get(1) > max_Y){
+				max_Y = new_sandwall.get(1);
+			}
+			if(new_sandwall.get(1) < min_Y){
+				min_Y = new_sandwall.get(1);
+			}
 			return false;
 		}
 
-		/*
+		/**
 		 * Simulates the fall of a grain of sand by keeping track of last known position and applying "sand rules" to the objekt.
-		*/
+
+		 * @return
+		 */
 		public int Simulation(){
 			ArrayList<Integer> last_path;
 			int count = 0;
 			int runtime_k = 0;
 			System.out.println(Integer.toString(this.x) + "," + Integer.toString(this.y));
-			while(this.y < 200 & runtime_k < 10000){ // runtime_k to prevent an infinit loop. 
+			while(this.y < max_Y & runtime_k < 10000){ // runtime_k to prevent an infinit loop. 
 				if(!this.Fall()){
 					if(path_stack.isEmpty()){
-						path_stack.add(new ArrayList<>(Arrays.asList(this.Start)));
+						path_stack.push(new ArrayList<>(Arrays.asList(this.Start))); // return to known position (start position)
 					}
 					last_path = path_stack.pop();
 					this.x = last_path.get(0); // jumps back to last known working path since all sand has to take the same path.
 					this.y = last_path.get(1);
+
 					count++;
 				}
 				runtime_k++;
 			}
+
+			try {
+				viszuliseCave();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
 			
 			System.out.println("runtime: " + Integer.toString(runtime_k) + " count: " + Integer.toString(count) + " x,y: " + Integer.toString(this.x) +","+Integer.toString(this.y));
 			System.out.println(path_stack.toString());
@@ -128,7 +177,7 @@ public class FallingSand {
 		}
 	}
 
-	/*
+	/**
 	 *	Reads input file and simpulates the falling sand.
 	 * */
 	public static void main(String[] args) {
@@ -138,7 +187,7 @@ public class FallingSand {
 			read_file("./input");
 		}
 
-		//System.out.println("Size of cave: " + Integer.toString(wall_set.size()));
+		System.out.println("Size of cave: " + wall_set.toString());
 
 		FallingSand fallingSandInstance = new FallingSand(); // Create an instance of the outer class
 
@@ -147,7 +196,7 @@ public class FallingSand {
 		System.out.println("Solution to part 1: " + Integer.toString(particel.Simulation()));
 	}
 	
-	/*
+	/**
 	 *	Reads file for coordiantes to compute falling sand simulation.
 	 *	
 	 *	@param filename name of the file to be read. Must be a text file.
@@ -158,6 +207,7 @@ public class FallingSand {
 		//
 
 		Vector<ArrayList<Integer>> collection_walls = new Vector<ArrayList<Integer>>();
+		int count = 0;
 		try (BufferedReader input_file = new BufferedReader(new FileReader(filename))){
 			String line;
 			ArrayList<Wall> walls;
@@ -168,10 +218,12 @@ public class FallingSand {
 					inbetween_points = obj.Get_points();
 					collection_walls.addAll(inbetween_points);
 				}
+				count++;
 			}
 		} catch (Exception x) {
 			System.err.format("Exception: %s%n", x);
 		}
+		System.out.println("number of lines:" + Integer.toString(count));
 		if (wall_set == null){
 			wall_set = new HashSet<>(collection_walls);
 		} else {
@@ -182,15 +234,34 @@ public class FallingSand {
 		//}
 	}
 
-	/*
+	static Integer max_X = -1000;
+	static Integer max_Y = -1000;
+	static Integer min_X = 1000;
+	static Integer min_Y = 1000;
+
+	/**
 	 *	Parses text of form "x1,y1 -> x2,y2 -> x3,y3 -> etc" into a collection of walls.
-	 * */
+
+	 * @param line
+	 * @return
+	 */
 	private static ArrayList<Wall> parse(String line) {
 		String[] coords_array = line.trim().split(" -> ");
 		Integer[] pre_coord;
 		String[] coord_str = coords_array[0].trim().split(",");
 		pre_coord = new Integer[]{Integer.parseInt(coord_str[0]),Integer.parseInt(coord_str[1])};
-		
+		if(pre_coord[0] > max_X){
+			max_X = pre_coord[0];
+		}
+		if(pre_coord[0] < min_X){
+			min_X = pre_coord[0];
+		}
+		if(pre_coord[1] > max_Y){
+			max_Y = pre_coord[1];
+		}
+		if(pre_coord[1] < min_Y){
+			min_Y = pre_coord[1];
+		}
 		Integer[] coord;
 		FallingSand fallingSandInstance = new FallingSand();
 		Wall temp_wall;
@@ -198,6 +269,18 @@ public class FallingSand {
 		for(int i = 1; i < coords_array.length; i++){
 			String[] coord1 = coords_array[i].trim().split(",");
 			coord  = new Integer[]{Integer.parseInt(coord1[0]),Integer.parseInt(coord1[1])};
+			if(coord[0] > max_X){
+				max_X = coord[0];
+			}
+			if(coord[0] < min_X){
+				min_X = coord[0];
+			}
+			if(coord[1] > max_Y){
+				max_Y = coord[1];
+			}
+			if(coord[1] < min_Y){
+				min_Y = coord[1];
+			}
 			temp_wall = fallingSandInstance.new Wall(pre_coord,coord);
 			collect_wall.add(temp_wall);
 			pre_coord = coord;
@@ -205,7 +288,69 @@ public class FallingSand {
 		return collect_wall;
 	}
 
-	static Set<ArrayList<Integer>> wall_set;
+
+	enum elementType {AIR, ROCK, SAND, START, TRACE}
+	/**
+	 * 	Vizulises the cave that the sand need to thraverse.
+	 * 
+	 * @throws Exception
+	 */
+	private static void viszuliseCave() throws Exception {
+		if(wall_set.isEmpty()){
+			throw new Exception("There are no walls to vizulise.");
+		}
+
+		elementType[][] Cave = new elementType[max_Y - min_Y + 1][max_X - min_X + 1];
+
+		System.out.println(new ArrayList<>(Arrays.asList(new Integer[]{min_X,max_X,min_Y,max_Y})));
+
+		Integer curr_X;
+		Integer curr_Y;
+
+		for(int i = 0; i<Cave.length;i++){
+			for(int j=0; j<Cave[i].length;j++){
+				Cave[i][j] = elementType.AIR;
+			}
+		}
+
+		for(ArrayList<Integer> W :wall_set){
+			curr_X = W.get(0) - min_X;
+			curr_Y = W.get(1) - min_Y;
+			Cave[curr_Y][curr_X] = elementType.ROCK;
+		}
+		if(!sand_set.isEmpty()){
+			for(ArrayList<Integer> W :sand_set){
+				curr_X = W.get(0) - min_X;
+				curr_Y = W.get(1) - min_Y;
+				Cave[curr_Y][curr_X] = elementType.SAND;
+			}
+		}
+
+		System.out.print("\n");
+		for(elementType[] row: Cave){
+			for(elementType el: row){
+				switch (el) {
+					case elementType.ROCK:
+						System.out.print("#");
+						break;
+					case elementType.SAND:
+						System.out.print("O");
+						break;
+					case elementType.AIR:
+						System.out.print(".");
+						break;
+				
+					default:
+						break;
+				}
+			}
+			System.out.print("\n");
+		}
+		System.out.print("\n");
+	}
+
+	static Set<ArrayList<Integer>> wall_set = new HashSet<>();
+	static Set<ArrayList<Integer>> sand_set = new HashSet<>();
 	static Stack<ArrayList<Integer>> path_stack = new Stack<>();
 }
 
