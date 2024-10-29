@@ -1,6 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/go,java,windows
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,java,windows
 
+### Advent files ###
+
+*/input # input-file
+*/test # input-file
+
+
 ### Go ###
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
