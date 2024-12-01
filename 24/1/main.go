@@ -1,80 +1,119 @@
 package main
 
-type binSubtree struct {
-	value   int
-	flag    bool
-	parent  *binSubtree
-	bigger  *binSubtree
-	smaller *binSubtree
-}
+import (
+	"bufio"
+	"log"
+	"math"
+	"os"
+	"strconv"
+	"strings"
+)
 
-type binTree struct {
-	mini *int
-	maxi *int
-	size int // number of nodes
-	tree *binSubtree
-}
+func main() {
 
-func GetMin(main_tree binTree) int {
-	return *main_tree.mini
-}
+	Logger_file, ok := os.Create("adventLog.24.1.log")
 
-func Tree2Array(main_tree binTree) []int {
-	// inserts nodes to a array in order (min to max)
-	// strat: 1) get to the left node (if exist),
-	// 2) move to the right node if exist
-	// 3) then move upwards to parent
-	// 4) pretend you are now at the left node and start again.
+	if ok != nil {
+		panic("Logging file did not succed.")
+	}
+
+	log.SetOutput(Logger_file)
+
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
+
+	file_name := "input"
+
+	File, ok := os.Open(file_name)
+
+	if ok != nil {
+		log.Fatal("Could not find file. File not found:" + file_name)
+	}
+
+	log.Print("Found the file without error.")
+
+	scanner := bufio.NewScanner(File)
 
 	var (
-		current_node *binSubtree
-		ret_list     []int
-		node_cue     []*binSubtree = []*binSubtree{main_tree.tree}
+		left_array  []int
+		right_array []int
+		p_ints      [2]int
+		line        string
 	)
 
-	if main_tree.size == 1 {
-		ret_list = append(ret_list, main_tree.tree.value)
-		return ret_list
+	for scanner.Scan() {
+		line = scanner.Text()
+		p_ints = parse_line(line)
+		left_array = append(left_array, p_ints[0])
+		right_array = append(right_array, p_ints[1])
 	}
 
-	for len(node_cue) != 0 {
-		current_node = node_cue[0]
-		node_cue = node_cue[1:]
+	left_array = SortInts(left_array)
+	right_array = SortInts(right_array)
 
-		if current_node.flag {
-			ret_list = append(ret_list, current_node.value)
-		} else {
-			if current_node.smaller != nil && !current_node.smaller.flag {
-				node_cue = append(node_cue, current_node.smaller)
-			}
+	var diff_sum float64 = 0
 
-			current_node.flag = true
-			node_cue = append(node_cue, current_node)
-
-			if current_node.bigger != nil && !current_node.bigger.flag {
-				node_cue = append(node_cue, current_node.bigger)
-			}
-
-			if current_node.parent != nil {
-				node_cue = append(node_cue, current_node.parent)
-			}
-		}
+	for i := range left_array {
+		diff_sum += math.Abs(float64(left_array[i] - right_array[i]))
 	}
 
-	return ret_list
+	println(int(diff_sum))
+	println(count_sim(left_array, right_array))
+
 }
 
-func insert(main_tree binSubtree, value int) {
-	if main_tree.value < 0 {
-		main_tree.value = value
-		main_tree.mini = &main_tree.value
-		main_tree.maxi = &main_tree.value
-		return
+func count_sim(left_array []int, right_array []int) int {
+	right_array_hash := make(map[int]int)
+	for _, el := range right_array {
+		_, ok := right_array_hash[el]
+		if !ok {
+			right_array_hash[el] = 1
+		} else {
+			right_array_hash[el]++
+		}
 	}
-	if value >= main_tree.tree.value {
-		var check_tree binSubtree = *main_tree.tree.bigger
-	} else {
-		var check_tree binSubtree = *main_tree.tree.smaller
+	var counting int = 0
+	for _, el := range left_array {
+		count, ok := right_array_hash[el]
+		if !ok {
+			continue
+		}
+		counting += el * count
+	}
+	return counting
+}
+
+func parse_line(line string) [2]int {
+	residual := strings.Split(line, "   ") // get two str
+	if len(residual) > 2 {
+		log.Printf("Found %v rather than 2. Proseeds assuming 2.", len(residual))
 	}
 
+	var ret_arr [2]int
+
+	for i := range residual {
+		if i > 2 {
+			break
+		}
+		parsed, ok := strconv.Atoi(residual[i])
+		if ok != nil {
+			log.Printf("Couldn't parse %v at position %v", residual[i], i)
+			ret_arr[i] = -1
+		}
+		ret_arr[i] = parsed
+	}
+
+	return ret_arr
+
+}
+
+func SortInts(arr []int) []int {
+	tree_arr := new(binTree)
+
+	for _, el := range arr {
+		tree_arr = insert(tree_arr, el)
+	}
+
+	sorted_arr := Tree2Array(*tree_arr)
+
+	return sorted_arr
 }
