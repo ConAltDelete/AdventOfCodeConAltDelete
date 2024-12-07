@@ -92,6 +92,7 @@ func Tree2Array(main_tree binTree) []int {
 }
 
 func parse2int(nodes []*binSubtree) []int {
+	// negative values indicate a subtree while positive values indicate a leaf.
 	var ret_arr []int
 	var ta int
 	for _, a := range nodes {
