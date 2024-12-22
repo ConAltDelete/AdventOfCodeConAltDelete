@@ -16,6 +16,13 @@ var rune2object map[rune]int = map[rune]int{
 	'O': BOX,
 }
 
+type Digi_box struct {
+	occupying_points_x []int
+	occupying_points_y []int
+
+	hit_boxes []*Digi_box
+}
+
 type Fish struct {
 	pos [2]int
 }
@@ -23,6 +30,9 @@ type Fish struct {
 type digital_Warehouse struct {
 	row_array [][]*int
 	col_array [][]*int
+
+	Wall_set *nil
+	box_set  map[[2]int]Digi_box
 }
 
 type Warehouse struct {

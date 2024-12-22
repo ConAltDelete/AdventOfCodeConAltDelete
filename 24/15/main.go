@@ -8,10 +8,13 @@ import (
 
 func main() {
 	file, ok := os.Open("input")
+
 	if ok != nil {
 		log.Fatal(ok)
 		panic("Could not open file")
 	}
+
+	defer file.Close()
 
 	log_file, err := os.Create("./advent.24.15.log")
 
@@ -51,19 +54,6 @@ func main() {
 	}
 
 	digitaliser_varehus(&varehus)
-
-	var coord_sum int
-
-	for i := range varehus.plantegning {
-		for j := range varehus.plantegning[0] {
-			value := varehus.plantegning[i][j]
-			if value == BOX {
-				coord_sum += GPS_coord([2]int{j, i})
-			}
-		}
-	}
-
-	println(coord_sum)
 
 	for Scanner.Scan() {
 		commands := Scanner.Text()

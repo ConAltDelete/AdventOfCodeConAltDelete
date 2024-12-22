@@ -265,7 +265,7 @@ __pypackages__/
 
 ### VisualStudioCode ###
 .vscode/*
-~/*
+*/~/*
 
 
 # Local History for Visual Studio Code
