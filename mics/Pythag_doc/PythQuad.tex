@@ -1,0 +1,140 @@
+\documentclass{article}
+
+\usepackage[backend=bibtex]{biblatex}
+
+\bibliography{Eksporterte elementer}
+
+\usepackage{algpseudocode}
+\usepackage{algorithm2e}
+\usepackage{amsmath}
+
+\title{From cube to sphere: Optimizing search space for finding Pythagorean quadruplets}
+\author{Mats Hoem Olsen}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+	Being provoked by a tenth grade math question that one supposed to solve with a brute forced method (see algorithm \ref{algo:brute_force}) led to the discovery of three conditions of Pythagorean quadruplets. The problem statement regards equation \ref{eq:py_full}.
+	\begin{equation}\label{eq:py_full}
+		\exists a,b,c,d \in \mathbf{N}\rightarrow a^2+b^2+c^2=d^2
+	\end{equation}
+	These conditions regards the first two terms (a and b) of the equation. Let p be a factor of $a^2+b^2$, if p satisfies:
+	\begin{enumerate}
+		\item $\frac{a^2+b^2}{p} + p \le 2*d$
+		\item $\frac{a^2+b^2}{p} + p \equiv 0\ mod\ 2$
+		\item $\sqrt{a^2+2b^2}-b \ge p$
+	\end{enumerate}
+	Then the parametrisation (equation \ref{eq:py_para}) satisfies the equation \ref{eq:py_full}. The rest of the terms (c,d) are determinant by the following expression
+	$$
+		\begin{matrix}
+		c= & \frac{a^2+b^2-p^2}{2p}\\
+		d= & \frac{a^2+b^2+p^2}{2p}
+		\end{matrix}
+	$$
+\end{abstract}
+\tableofcontents
+
+\section{Naive approche}
+
+This adventure started with being presented a task as follows:
+\begin{quote}
+	A pythagorian quadruple are four numbers such that $a^2+b^2+c^2=d^2$ and all numbers are integers. Let $a\le b \le c \le d$. Show that for $d \le 30$ there exist 52 solutions.
+\end{quote}
+This quote has been translated, but the essence is preserved. After a peer review from a committee of retired math teachers it was concluded that it was supposed to be solved using a simple algorithm.
+
+\section{algorithms}
+The naive algorithm (algorithm \ref{algo:brute_force}) solves the problem in $O(n^3)$ 
+
+\begin{algorithm}[H]\label{algo:brute_force}
+	\SetAlgoLined
+	\caption{Brute force algorithm for finding Pythagorean quadruplets}
+	$count \gets 0$\;
+	\ForEach{ i = \{1\dots max\}}{
+		\ForEach{j=\{i\dots max\}}{
+			\ForEach{k=\{j\dots max\}}{
+				$possible\_solution = a^2+b^2+c^2$\;
+				\If{$\sqrt{possible\_solution}\in \mathbf{N}$ and $\sqrt{possible\_solution}\le 30$}{
+					$count \gets count +1$\;
+				}
+			}
+		}
+	}
+\end{algorithm}
+
+This algorithm has an time complexity of $O(n^3)$.
+
+\section{Parametrisation}
+
+Rather than to tackle the problem head-on it is more appropriate to parametrize the formula \ref{eq:py_full}. The chosen parametrization is derived from \cite{spiraDiophantineEquationX^21962}.
+
+\begin{equation}\label{eq:py_para}
+	a^2+b^2+\left(\frac{a^2+b^2-p^2}{2p}\right)^2 = \left(\frac{a^2+b^2+p^2}{2p}\right)^2
+\end{equation}
+
+where p divides $a^2+b^2$ and a, b are arbitrary number with some restrictions, as will be disused in section \ref{sec:teory}.
+
+\section{Optimisations}\label{sec:teory}
+
+\subsection{Bounds}
+
+To improve the bounds of valid solution the variable k will be utelizes to denote the new bound. First bound will be to take the formula \ref{eq:py_full} and assume all integers are equal, giving
+$$
+	k^2 + k^2 + k^2 = d^2 \to 3k^2 = d^2
+$$
+
+A smaller bound can be achieved with the substitution $k \to k-1$
+$$
+	3(k-1)^2 \le d^2
+$$
+
+giving a quadratic equation $3(k-1)^2 - d^2 \le 0$. The positive solution to the equation is 
+$$
+	k \le 1+\frac{\sqrt{3}d}{3}
+$$
+
+The negative solution won't be considered as only positive integers get considered. Similar argument can be made for the parameter b. Instead of considering all values being equal, we will assume that an suitable "a" has been chosen. This gives a similar equation
+$$
+	a^2 + 2(k-1)^2 \le d^2
+$$
+
+This gives a function depending on chose of a.
+$$
+	k \le \sqrt{\frac{d^2-a^2}{2}}+1
+$$
+
+Thereby the set of possible solutions are as follows
+$$
+\{(a,b) | 1\le a \le 1+\frac{\sqrt{3}d}{3}, a \le b \le \sqrt{\frac{d^2-a^2}{2}}+1\}
+$$
+
+\subsection{limits of a,b}
+
+\subsection{limits of factors}
+
+Given the denominator of the equation \ref{eq:py_para} in c,d position.
+
+$$
+  	\frac{a^2+b^2\pm p^2}{2p} = c,d
+$$	
+
+This gives two consequences:
+\begin{enumerate}
+	\item $a^2+b^2 \pm p^2$ has to be even to divide 2p
+	\item $\frac{a^2+b^2}{p} \pm p \le 2d$
+\end{enumerate}
+
+assessing the inequality 
+$$
+b \le \frac{a^2+b^2-p^2}{2p}
+$$
+
+will give a bound of factor p. When moving everything to the right inequality 
+$$
+p^2 + 2bp - (a^2+b^2) \le 0
+$$
+When solved using the quadratic formula gives the equation \ref{eq:cond3}.
+\begin{equation}\label{eq:cond3}
+	p \le -b + \sqrt{a^2 + 2b^2}
+\end{equation}
+
+\end{document}
