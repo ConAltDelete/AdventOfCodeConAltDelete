@@ -27,7 +27,7 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-ignore/*
+*/ignore/*
 # Go workspace file
 go.work
 

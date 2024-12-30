@@ -36,8 +36,13 @@ def quad_py(m:int,n:int,k:int) -> tuple[int,int,int]:
         m**2 + n**2 + k**2
         )
 
-def factor(n: int):
-    for i in divisors(n):
+def factor(a:int,b:int,maximum_value = inf,**kwargs):
+    for i in divisors(n:= a**2 + b**2):
+        if i < int(-maximum_value+(maximum_value**2 + a**2 + b**2)**0.5):
+            continue
+        if i > int((a**2 + 2*b**2)**0.5 - b):
+            logging.debug("FAILED::FACTORING::[a:{}, b:{}, fac:{}] factor is greater than sqrt(a^2+2b^2)-b".format(a,b,i))
+            return GeneratorExit
         if i**2 < n:
             yield i
 
@@ -49,39 +54,55 @@ def two_ints(maximum_value = inf,parameter_filter = lambda *k: True,factor_filte
         for b in range(a,upper_bound_b(maximum_value,a)):
             if not(parameter_filter(a,b,maximum_value = maximum_value,**kwargs)):
                 continue
-            for fac in factor(a**2 + b**2):
+            for fac in factor(a,b,maximum_value = maximum_value,**kwargs):
                 if not(factor_filter(a,b,fac,maximum_value = maximum_value,**kwargs)):
+                    #logging.debug("FAILED::FACTOR::[a:{}, b:{}, fac:{}] Could not find suible factors".format(a,b,fac))
                     continue
                 yield (a,b,fac)
 
 
 def parameter_filter(*N:int,maximum_value = inf,**kwargs) -> bool:
     # Gitt en tuple med vardier, skjekk om de er gyldige
-            
-    ab = N[0]**2 + N[1]**2
 
-    if ab > maximum_value**2:
-        return False
-    discriminant = ab + N[1]**2
-    if discriminant > maximum_value**2:
+    a = N[0]
+    b = N[1]
+    ab = a**2 + b**2
+    
+    if (ab%4 == 2 or ab < 4): # ignores 3 as 3 is not a sum of 2 squares; ref: https://oeis.org/A024352
+        logging.debug("FAILED::PARAMETER::[a:{}, b:{}] a^2+b^2 is congruent to 2 mod 4".format(N[0],N[1]))
         return False
 
     if isprime(ab): # if ab is a prime number
                 if (((ab-1)/2 > maximum_value) \
                 |  ((ab+1)/2 > maximum_value)):
+                    logging.debug("FAILED::PARAMETER::[a:{}, b:{}] ab is prime and too large".format(N[0],N[1]))
                     return False
+                
+    logging.debug("PASSED::PARAMETER::[a:{}, b:{}]".format(a,b))
 
     return True
 
 
 def factor_filter(a,b,fac, maximum_value = inf,**kwarg) -> bool:
     lm_test = a**2 + b**2
-    if (lm_test/fac + fac) > 2*maximum_value: # ~70%
-        return False
-    if (((lm_test/fac) - fac) % 2) != 0: # ~50%
+    
+    if fac < -maximum_value+(maximum_value**2 + a**2 +b**2)**0.5: # ~50%
+        logging.debug("FAILED::FACTOR::[a:{}, b:{}, fac:{}] factor is smaller than sqrt(d^2+a^2+b^2)-d".format(a,b,fac))
         return False
     if fac > -b + (lm_test + b**2)**0.5: # ~58%
+        logging.debug("FAILED::FACTOR::[a:{}, b:{}, fac:{}] factor is greater than sqrt(a^2+2b^2)-b".format(a,b,fac))
         return False
+
+    c_pluss = (lm_test//fac + fac)
+    c_minus = (lm_test//fac - fac)
+    if c_pluss > 2*maximum_value or c_minus > 2*maximum_value:
+        logging.debug("FAILED::FACTOR::[a:{}, b:{}, fac:{}] c too large".format(a,b,fac))
+        return False
+    if (c_minus % 2) != 0: # ~50%
+        logging.debug("FAILED::FACTOR::[a:{}, b:{}, fac:{}] c not divisible by 2".format(a,b,fac))
+        return False
+
+    logging.debug("PASSED::FACTOR::[a:{}, b:{}, fac:{}]".format(a,b,fac))
     return True
 
 
@@ -96,7 +117,7 @@ def quad_py_2(a: int,b: int, fac: int,**kwarg) -> Generator[tuple[int,int,int,in
             (lm_test + fac**2) // (2*fac)
         )
         if test_yield[2] < 0 or test_yield[3] < 0:
-            logging.info("negative value in {}".format(test_yield))
+            logging.critical("negative value in {} given values ({},{},{})".format(test_yield,a,b,fac))
             raise ValueError("negative value in {} given values ({},{},{})".format(test_yield,a,b,fac))
         yield test_yield
 
